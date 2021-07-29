@@ -19,15 +19,14 @@ const pixelToNoteTimeMs = pixels => sixteenthNotePosToTimeMs(pixels/PIXELS_PER_N
 const noteTimeToPixelLocation = (topTime, noteTime) => timeMsToSixteenthNotePos(noteTime-topTime)*PIXELS_PER_NOTE;
 
 class Chart extends HTMLElement {
-    constructor(notes=defaultNotes, keys=defaultKeys, local=true) {
+    // TODO: have to be attributes now
+    constructor() {
         super();
-        this.notes=notes;
-        this.keys = keys;
+        this.notes = [];
+        this.keys = defaultKeys;
         this.lastMs = 0;
         this.startMs = 0;
-        if (local) {
-            this.input = new Input(this.keys, this.notes, this);
-        }
+        this.isPlaying = false;
     }
     get canvasHeight() {
         return this.offsetHeight - 50;
@@ -43,7 +42,7 @@ class Chart extends HTMLElement {
     }
     connectedCallback() {
         this.drawTemplate();
-        this.run = (timeMs = 0) => {
+        this.run = (resolve) => (timeMs = 0) => {
             if(!this.startMs)
                 this.startMs = timeMs;
 
@@ -52,15 +51,23 @@ class Chart extends HTMLElement {
 
             let ok = this.update(this.lastMs - this.startMs);
             if(ok) {
-                requestAnimationFrame(this.run);
+                requestAnimationFrame(this.run(resolve));
             }
             else {
                 console.log(this.lastMs - this.startMs);
+                resolve();
             }
         };
     }
-    play(timeMs = 0) {
-        this.run(timeMs);
+    play(notes, isLocal, timeMs=0) {
+        this.notes = notes;
+        if(isLocal) {
+            this.input = new Input(this.keys, this.notes, this);
+        }
+        this.isPlaying = true;
+        return new Promise((resolve, _reject) => {
+            this.run(resolve)(timeMs);
+        });
     }
     update(currTime) {
         if(currTime >= this.musicLength) {
@@ -109,10 +116,7 @@ class Chart extends HTMLElement {
         // if note is not visible, do not draw
     }
     draw(currTime) {
-        // this.context.fillStyle = '#000';
-        // this.context.fillRect(0, 0, this.canvas.width, this.canvas.height);
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
         this.drawKeys();
         this.notes.forEach((notesAtTime, noteIndex) => 
             notesAtTime.forEach(note => this.drawNote(note, noteIndex, currTime))
@@ -122,7 +126,6 @@ class Chart extends HTMLElement {
         this.querySelector('#score').innerHTML = score;
     }
 }
-
 if (!customElements.get('app-chart')) {
     customElements.define('app-chart', Chart);
 }

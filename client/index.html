@@ -11,71 +11,34 @@
             text-align: center;
             overflow: hidden;
         }
-
         /* canvas {
             border: solid .2em #707070;
         } */
-        
         iframe {
             top: 30px;
             position: absolute;
-            z-index: -1;
+            z-index: 1;
         }
-
+        file-input {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background-color: #000;
+        }
         app-chart {
             width: 50%;
             height: calc(100% - 60px);
             border: 1px solid grey;
-            /* z-index: 100;
-            background-color: blue;
-            opacity: 20%; */
         }
     </style>
 </head>
 <body>
-    <!-- on Brave, strange issue with iframe youtube API being unable to play video, unless you toggle 'allowing scripts/cookies' -->
-    <iframe
-        id="player"
-        width="1664" 
-        height="742"
-        src="https://www.youtube.com/embed/EJiXO3vwNFo?enablejsapi=1" 
-        title="YouTube video player" 
-        frameborder="0" 
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-        allowfullscreen>
-    </iframe>
-
-    <script type="text/javascript">
-        var tag = document.createElement('script');
-        tag.id = 'iframe-demo';
-        tag.src = 'https://www.youtube.com/iframe_api';
-        var firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-        var video;
-        function onYouTubeIframeAPIReady() {
-            video = new YT.Player('player', {
-                videoId: 'EJiXO3vwNFo',
-                events: {
-                    'onReady': onPlayerReady,
-                    //'onStateChange': onPlayerStateChange
-                }
-            });
-        }
-        function onPlayerReady(event) {
-            event.target.setVolume(30);
-            event.target.playVideo();
-            const playerChart = document.createElement('app-chart');
-            document.body.appendChild(playerChart);
-            playerChart.run();
-            const playerChart2 = document.createElement('app-chart');
-            document.body.appendChild(playerChart2);
-            playerChart2.run();
-        }
-    </script>
+    <file-input></file-input>
     <script src="./utils/utils.js"></script>
-    <script src="./charts/senpai-chart.js"></script>
     <script src="./input.js"></script>
     <script src="./chart.js"></script>
+    <script src="./mp3-file-input.js"></script>
 </body>
 </html>
