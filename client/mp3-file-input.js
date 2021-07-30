@@ -62,19 +62,21 @@ class FileInput extends HTMLElement {
         // hide when playing
         this.hidden = true;
         this.play().then(async () => {
-            const playerChart = document.createElement('app-chart');
-            document.body.appendChild(playerChart);
-            let promise1 = playerChart.play(this.chartNotes, true);
+            const playerChart1 = document.createElement('app-chart');
+            document.body.appendChild(playerChart1);
+            let promise1 = playerChart1.play(this.chartNotes, true);
             const playerChart2 = document.createElement('app-chart');
             document.body.appendChild(playerChart2);
             let promise2 = playerChart2.play(this.chartNotes, false);
             await Promise.all([promise1, promise2]);
             this.stop();
+            document.body.removeChild(playerChart1);
+            document.body.removeChild(playerChart2);
         });
     }
     stop() {
         this.hidden = false;
-        //this.button.value = '';
+        this.button.value = '';
     }
 }
 if (!customElements.get('file-input')) {

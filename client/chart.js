@@ -19,14 +19,9 @@ const pixelToNoteTimeMs = pixels => sixteenthNotePosToTimeMs(pixels/PIXELS_PER_N
 const noteTimeToPixelLocation = (topTime, noteTime) => timeMsToSixteenthNotePos(noteTime-topTime)*PIXELS_PER_NOTE;
 
 class Chart extends HTMLElement {
-    // TODO: have to be attributes now
     constructor() {
         super();
-        this.notes = [];
-        this.keys = defaultKeys;
-        this.lastMs = 0;
-        this.startMs = 0;
-        this.isPlaying = false;
+        this.reset();
     }
     get canvasHeight() {
         return this.offsetHeight - 50;
@@ -40,6 +35,15 @@ class Chart extends HTMLElement {
     get musicLength() {
         return sixteenthNotePosToTimeMs(this.notes.length);
     }
+    reset() {
+        this.notes = [];
+        this.keys = defaultKeys;
+        this.lastMs = 0;
+        this.startMs = 0;
+        this.isPlaying = false;
+        this.hasInput = false;
+        this.animationRequest = null;
+    }
     connectedCallback() {
         this.drawTemplate();
         this.run = (resolve) => (timeMs = 0) => {
@@ -50,19 +54,24 @@ class Chart extends HTMLElement {
             this.lastMs = timeMs;
 
             let ok = this.update(this.lastMs - this.startMs);
-            if(ok) {
-                requestAnimationFrame(this.run(resolve));
+            if (ok) {
+                this.animationRequest = requestAnimationFrame(this.run(resolve));
             }
             else {
                 console.log(this.lastMs - this.startMs);
+                cancelAnimationFrame(this.animationRequest);
+                if (this.hasInput) this.input.stop();
                 resolve();
             }
         };
     }
-    play(notes, isLocal, timeMs=0) {
+    play(notes, hasInput, timeMs=0) {
+        this.reset();
         this.notes = notes;
-        if(isLocal) {
+        this.hasInput = hasInput;
+        if(this.hasInput) {
             this.input = new Input(this.keys, this.notes, this);
+            this.input.start();
         }
         this.isPlaying = true;
         return new Promise((resolve, _reject) => {
@@ -72,6 +81,10 @@ class Chart extends HTMLElement {
     update(currTime) {
         if(currTime >= this.musicLength) {
             return false;
+        }
+        if (this.hasInput) {
+            this.input.updateScore();
+            this.drawScore(this.input.score);
         }
         this.draw(currTime);
         return true;
