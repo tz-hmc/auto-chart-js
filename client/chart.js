@@ -6,9 +6,9 @@
 
 const defaultKeys = [
     {keyCode: 37, color: 'purple'},
-    {keyCode: 38, color: 'blue'},
+    {keyCode: 40, color: 'blue'},
+    {keyCode: 38, color: 'red'},
     {keyCode: 39, color: 'green'},
-    {keyCode: 40, color: 'red'}
 ];
 
 const PIXELS_PER_NOTE = 45;

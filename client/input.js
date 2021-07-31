@@ -21,10 +21,12 @@ class Input {
         this.lastUpdateScoreIndex = 0;
     }
     start() {
+        console.log(this.notes);
         this.registerEventListeners();
     }
     stop() {
         console.log('great', this.great, 'good', this.good, 'extra', this.extra, 'missing', this.missing);
+        console.log(this.inputHistory);
         this.removeEventListeners();
     }
     registerEventListeners() {
@@ -64,7 +66,8 @@ class Input {
             //console.log(i, noteIndex);
             let noteSlice = this.notes[i].slice(0);
             let inputSlice = this.inputHistory[i].slice(0);
-            let previousInputSlice = (i-1 >= 0) ? this.inputHistory[i-1].slice(0) : [];
+            let prevInputSlice = (i-1 >= 0) ? this.inputHistory[i-1].slice(0) : [];
+            let prevPrevInputSlice = (i-2 >= 0) ? this.inputHistory[i-2].slice(0) : [];
             let taken = 0;
             while (noteSlice.length > 0) {
                 let noteToHit = noteSlice.pop();
@@ -74,7 +77,8 @@ class Input {
                     taken += 1;
                 }
                 // match all early by 1 notes = good
-                else if (previousInputSlice.some(note => note.keyCode === noteToHit.keyCode)) {
+                else if (prevInputSlice.some(note => note.keyCode === noteToHit.keyCode)
+                    || prevPrevInputSlice.some(note => note.keyCode === noteToHit.keyCode)) {
                     this.good += 1;
                     taken += 1;
                 }

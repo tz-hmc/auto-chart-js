@@ -2,27 +2,42 @@ class FileInput extends HTMLElement {
     constructor() {
         super();
         this.input = null;
+        this.chartNotes = defaultNotes;
     }
     connectedCallback() {
         this.render();
         this.input = document.querySelector('input');
-        this.button = document.querySelector('button');
+        this.button = document.querySelector('button#start');
+        this.test = document.querySelector('button#test')
         this.button.hidden = true;
         this.registerEventListeners();
     }
     registerEventListeners() {
-        this.input.onchange = (event) => {
+        this.input.onchange = (_e1) => {
             const reader = new FileReader();
             for (let file of this.input.files) {
                 reader.readAsArrayBuffer(file);
             }
-            reader.onload = (_e) => {
+            reader.onload = (_e2) => {
                 this.buffer = reader.result;
                 this.upload();
             }
         }
         this.button.onclick = () => {
             this.start();
+        }
+        this.test.onclick = async () => {
+            this.hidden = true;
+            const playerChart1 = document.createElement('app-chart');
+            document.body.appendChild(playerChart1);
+            let promise1 = playerChart1.play(this.chartNotes, true);
+            const playerChart2 = document.createElement('app-chart');
+            document.body.appendChild(playerChart2);
+            let promise2 = playerChart2.play(this.chartNotes, false);
+            await Promise.all([promise1, promise2]);
+            this.stop();
+            document.body.removeChild(playerChart1);
+            document.body.removeChild(playerChart2);
         }
     }
     render() {
@@ -37,6 +52,7 @@ class FileInput extends HTMLElement {
             <p>select a mp3</p>
             <input id="file-input" type="file"></input>
             <button id="start">start playing</button>
+            <button id="test">test</button>
         </div>`;
     }
     async upload() {
