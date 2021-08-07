@@ -7,12 +7,6 @@ var server = express();
 var host = '127.0.0.1',
     port = 3333;
 
-// app().get('*.js', 
-//     (req, res) => res.sendFile(path.join(__dirname, 'index.html'))
-// );
-// app.get('/video/:videoId', function (req, res) {
-//     res.send(req.params)
-// });
 server.put("/song", (req, res) => {
     var mp3SongName = 'song.mp3';
     var mp3File = fs.createWriteStream(mp3SongName);

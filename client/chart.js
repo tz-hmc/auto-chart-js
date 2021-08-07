@@ -83,7 +83,6 @@ class Chart extends HTMLElement {
             return false;
         }
         if (this.hasInput) {
-            this.input.updateScore();
             this.drawScore(this.input.score);
         }
         this.draw(currTime);
@@ -116,15 +115,38 @@ class Chart extends HTMLElement {
             this.context.fill(circle);
         }
     }
+    drawRoundRect(keyIndex, centerY, noteLength) {
+        let roundRect = new Path2D();
+        let centerX = this.columnSize*(keyIndex+0.5);
+        let height = PIXELS_PER_NOTE*noteLength-(2*DEFAULT_RADIUS);
+        let left = centerX-DEFAULT_RADIUS,
+            right = centerX+DEFAULT_RADIUS,
+            top = centerY-DEFAULT_RADIUS,
+            bottom = centerY+DEFAULT_RADIUS+height;
+        roundRect.moveTo(right, bottom);
+        roundRect.arcTo(left, bottom, left, top, DEFAULT_RADIUS);
+        roundRect.arcTo(left, top, right, top, DEFAULT_RADIUS);
+        roundRect.arcTo(right, top, right, bottom, DEFAULT_RADIUS);
+        roundRect.arcTo(right, bottom, left, bottom, DEFAULT_RADIUS);
+        this.context.fillStyle = this.keys[keyIndex].color;
+        this.context.fill(roundRect);
+    }
     drawNote(note, noteIndex, currTimeMs) {
         // currTime is the very top of canvas
         let canvasTopTime = currTimeMs;
         let canvasBottomTime = currTimeMs+pixelToNoteTimeMs(this.canvas.height);
-        let noteTime = sixteenthNotePosToTimeMs(noteIndex);
-        let noteYPosition = noteTimeToPixelLocation(canvasTopTime, noteTime);
-        if(noteTime > canvasTopTime && noteTime < canvasBottomTime) {
-            this.drawCircle(this.keys.findIndex(key => key.keyCode === note.keyCode), 
-                noteYPosition);
+        let beginNoteTime = sixteenthNotePosToTimeMs(noteIndex);
+        let endNoteTime = sixteenthNotePosToTimeMs(noteIndex+note.length);
+        let noteYPosition = noteTimeToPixelLocation(canvasTopTime, beginNoteTime);
+        // if outside the window, do not render
+        if(!(beginNoteTime > canvasBottomTime || endNoteTime < canvasTopTime)) {
+            let keyIndex = this.keys.findIndex(key => key.keyCode === note.keyCode);
+            if (note.length == 1) {
+                this.drawCircle(keyIndex, noteYPosition);
+            }
+            else {
+                this.drawRoundRect(keyIndex, noteYPosition, note.length)
+            }
         }
         // if note is not visible, do not draw
     }

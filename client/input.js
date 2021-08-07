@@ -10,6 +10,7 @@ class Input {
         this.chart = chart;
         
         this.inputHistory = (new Array(this.notes.length)).fill(null).map(() => []);
+        this.currNoteIndices = {};
 
         this.score = 0;
 
@@ -29,27 +30,34 @@ class Input {
         console.log(this.inputHistory);
         this.removeEventListeners();
     }
+    checkNoteValid(keyCode, noteIndex) {
+        return (noteIndex < this.inputHistory.length 
+            && this.keyCodes.includes(keyCode)
+            && !this.inputHistory[noteIndex].some((note) => note.keyCode === keyCode));
+    }
+    addCurrentNote(keyCode, beginNoteIndex) {
+        if (!(keyCode in this.currNoteIndices)
+            && this.checkNoteValid(keyCode, beginNoteIndex)) {
+            this.currNoteIndices[keyCode] = beginNoteIndex;
+        }
+    }
+    pushCurrentNote(keyCode, endNoteIndex) {
+        if (keyCode in this.currNoteIndices
+            && this.checkNoteValid(keyCode, endNoteIndex)) {
+            let beginNoteIndex = this.currNoteIndices[keyCode];
+            this.inputHistory[beginNoteIndex].push({keyCode, length: endNoteIndex - beginNoteIndex + 1});
+            delete this.currNoteIndices[keyCode];
+        }
+    }
     registerEventListeners() {
         this.keydownListener = event => {
             let noteIndex = Math.floor(timeMsToSixteenthNotePos(this.chart.lastMs - this.chart.startMs));
-            if (noteIndex < this.inputHistory.length 
-                && this.keyCodes.includes(event.keyCode)
-                && !this.inputHistory[noteIndex].some((note) => note.keyCode === event.keyCode))
-            {
-                this.inputHistory[noteIndex].push({keyCode: event.keyCode, length: 1});
-                //console.log(this.inputHistory);
-            }
+            this.addCurrentNote(event.keyCode, noteIndex);
         };
         this.keyupListener = event => {
             let noteIndex = Math.floor(timeMsToSixteenthNotePos(this.chart.lastMs - this.chart.startMs));
-            for (var i = noteIndex; i >= 0; i--) {
-                let note = this.inputHistory[noteIndex].find((note) => note.keyCode === event.keyCode);
-                //console.log(this.inputHistory);
-                if (note) {
-                    note.length = (noteIndex - i);
-                    break;
-                }
-            }
+            this.pushCurrentNote(event.keyCode, noteIndex);
+            this.updateScore();
         };
         document.addEventListener('keydown', this.keydownListener);
         document.addEventListener('keyup', this.keyupListener);

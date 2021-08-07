@@ -87,8 +87,10 @@ function energyComparison(energy, energyMA, freqIncrement) {
     let currBeat = [];
     energy[i].forEach((energyAtFreq, j) => {
       if (energyAtFreq > C * energyMA[i][j]) {
-        currBeat.push(j * freqIncrement);
-        //console.log('beep boop');
+        // just a check
+        let noteFreq = j * freqIncrement;
+        let noteLength = getNoteLength(energy, energyMA, C, i, j);
+        currBeat.push(noteLength);
       }
       else {
         currBeat.push(0);
@@ -97,6 +99,18 @@ function energyComparison(energy, energyMA, freqIncrement) {
     beats.push(currBeat);
   }
   return beats;
+}
+
+function getNoteLength(energy, energyMA, C, timeIndex, freqIndex) {
+  let energyAtFreq = energy[timeIndex][freqIndex];
+  let length = 1;
+  // TODO: replace with something that actually makes sense
+  while (timeIndex < energy.length && 
+    energyAtFreq > 2*C*energyMA[timeIndex][freqIndex]) {
+    length += 1;
+    timeIndex += 1;
+  }
+  return length;
 }
 
 function getFrequencyIncrement(samplingRatekHz, fftSize) {
@@ -137,9 +151,9 @@ function chartConversion(buffer, beats, periodSize, chartIncrement, samplingRate
     let currentTimeEnd = (i+1)*chartIncrement;
     let startBeatIndex = Math.floor(currentTimeBegin/beatsIncrement);
     let endBeatIndex = Math.floor(currentTimeEnd/beatsIncrement);
-    let beatsInChartPeriod = beats.slice(startBeatIndex, endBeatIndex).reduce((accum, freqsAtT) => {
-      let flatFreq = freqsAtT.filter(freq => freq !== 0);
-      return [...accum, ...flatFreq];
+    let beatsInChartPeriod = beats.slice(startBeatIndex, endBeatIndex).reduce((accum, noteLength) => {
+      let flatNoteLength = noteLength.filter(freq => freq !== 0);
+      return [...accum, ...flatNoteLength];
     }, []);
     chart[i] = beatsInChartPeriod;
   }
@@ -153,22 +167,28 @@ function dirtyKeycodeGenerate(noteFreq, freqIncrementForSubband) {
   return 37+keyNumber;
 }
 
-
-
 // generate the keycode chart
 function keyCodeChartConversion(chart, freqIncrementForSubband) {
   let keyCodeChart = [];
+  let currentKeys = {37: 0, 38: 0, 39: 0, 40: 0};
   for (let i=0; i < chart.length; i++) {
     let row = chart[i];
     let keyObjs = [];
-    let keySet = new Set();
-    row.forEach(note => {
-      let keyCode = dirtyKeycodeGenerate(note, freqIncrementForSubband);
-      if (!keySet.has(keyCode)) {
-        keySet.add(keyCode);
-        keyObjs.push({keyCode: keyCode, length: 1});
+    row.forEach((noteLength, i) => {
+      let noteFreq = i*freqIncrementForSubband;
+      let keyCode = dirtyKeycodeGenerate(noteFreq, freqIncrementForSubband);
+      // keep notes from overlapping with previous note's length
+      if (currentKeys[keyCode] === 0) {
+        // max length is 32 for now
+        let length = noteLength < 32 ? noteLength : 32;
+        currentKeys[keyCode] = length;
+        keyObjs.push({keyCode: keyCode, length: length});
       }
     })
+    Object.keys(currentKeys).forEach(key => {
+      let prevValue = currentKeys[key];
+      currentKeys[key] = prevValue>0 ? prevValue-1 : prevValue;
+    });
     // for now, limit number of keys at one step to 2
     while (keyObjs.length > 2) {
       let randomIndex = Math.floor(Math.random()*keyObjs.length);
