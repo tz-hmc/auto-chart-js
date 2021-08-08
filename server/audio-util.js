@@ -1,6 +1,6 @@
 /**
-* implementation intended to follow FFT beat detection in below:
-* http://archive.gamedev.net/archive/reference/programming/features/beatdetection/
+* implementation intended to follow FFT note detection in below:
+* http://archive.gamedev.net/archive/reference/programming/features/notedetection/
 *
 * INCOMPLETE
 * 
@@ -77,28 +77,28 @@ function simpleMovingAverage(arr, windowSize) {
 
 function energyComparison(energy, energyMA, freqIncrement) {
   let C = 5; //250
-  let beats = [];
+  let notes = [];
   
   console.log('energy size | rows: ', energy.length, "columns: ",  energy[0].length);
   console.log('energyMA size | rows: ', energyMA.length, "columns: ",  energyMA[0].length);
   console.log('freqIncrement for subband is ', freqIncrement);
 
   for (var i = 0; i < energy.length; i++) {
-    let currBeat = [];
+    let currNote = [];
     energy[i].forEach((energyAtFreq, j) => {
       if (energyAtFreq > C * energyMA[i][j]) {
         // just a check
         let noteFreq = j * freqIncrement;
         let noteLength = getNoteLength(energy, energyMA, C, i, j);
-        currBeat.push(noteLength);
+        currNote.push(noteLength);
       }
       else {
-        currBeat.push(0);
+        currNote.push(0);
       }
     });
-    beats.push(currBeat);
+    notes.push(currNote);
   }
-  return beats;
+  return notes;
 }
 
 function getNoteLength(energy, energyMA, C, timeIndex, freqIndex) {
@@ -134,13 +134,13 @@ function plotFFT(fftOutput, samplingRatekHz) {
 }
 
 // Generate the chart
-function chartConversion(buffer, beats, periodSize, chartIncrement, samplingRatekHz) {
+function chartConversion(buffer, notes, periodSize, chartIncrement, samplingRatekHz) {
   let totalTimeSec = buffer.length/(samplingRatekHz*1000);
   
   // sanity checks
-  let beatsIncrement = totalTimeSec/beats.length;
-  let expectedBeatsIncrement = totalTimeSec/(buffer.length/periodSize);
-  console.log(`beats increment is ${beatsIncrement}, expected beats increment is ${expectedBeatsIncrement}`);
+  let notesIncrement = totalTimeSec/notes.length;
+  let expectedNotesIncrement = totalTimeSec/(buffer.length/periodSize);
+  console.log(`notes increment is ${notesIncrement}, expected notes increment is ${expectedNotesIncrement}`);
 
   let numberNotes = Math.floor(totalTimeSec/chartIncrement);
   console.log(`total time is ${totalTimeSec} and number of notes is ${numberNotes}`);
@@ -149,13 +149,13 @@ function chartConversion(buffer, beats, periodSize, chartIncrement, samplingRate
   for (let i=0; i < chart.length; i++) {
     let currentTimeBegin = i*chartIncrement;
     let currentTimeEnd = (i+1)*chartIncrement;
-    let startBeatIndex = Math.floor(currentTimeBegin/beatsIncrement);
-    let endBeatIndex = Math.floor(currentTimeEnd/beatsIncrement);
-    let beatsInChartPeriod = beats.slice(startBeatIndex, endBeatIndex).reduce((accum, noteLength) => {
+    let startNoteIndex = Math.floor(currentTimeBegin/notesIncrement);
+    let endNoteIndex = Math.floor(currentTimeEnd/notesIncrement);
+    let notesInChartPeriod = notes.slice(startNoteIndex, endNoteIndex).reduce((accum, noteLength) => {
       let flatNoteLength = noteLength.filter(freq => freq !== 0);
       return [...accum, ...flatNoteLength];
     }, []);
-    chart[i] = beatsInChartPeriod;
+    chart[i] = notesInChartPeriod;
   }
   return chart;
 }
@@ -213,7 +213,7 @@ function writeChartToWorkbook(workbook, chart) {
 // sampling rate: 44100
 // period size: 1024
 // minimum chart increment: 1/16 note (in 60bpm)
-async function fftBeatPitchDetection(buffer, samplingRatekHz) {
+async function fftNotePitchDetection(buffer, samplingRatekHz) {
 
   let periodSize = 1024;
   let paddedBufferSize = Math.ceil(buffer.length/periodSize)*periodSize;
@@ -251,20 +251,20 @@ async function fftBeatPitchDetection(buffer, samplingRatekHz) {
 
   let freqIncrementForSubband = getFrequencyIncrement(samplingRatekHz, periodSize)*periodSize/subbands;
 
-  let beats = energyComparison(energy, energyMA, freqIncrementForSubband);
+  let notes = energyComparison(energy, energyMA, freqIncrementForSubband);
 
   // using sixteenth note
   let chartIncrement = 1/16;
-  let chart = chartConversion(buffer, beats, periodSize, chartIncrement, samplingRatekHz);
+  let chart = chartConversion(buffer, notes, periodSize, chartIncrement, samplingRatekHz);
 
   console.log(`writing to workbook`);
 
   let workbook = await XlsxPopulate.fromBlankAsync();
   workbook.addSheet("energy").cell("A1").value(energy);
   workbook.addSheet("energyMA").cell("A1").value(energyMA);
-  workbook.addSheet("beats").cell("A1").value(beats);
+  workbook.addSheet("notes").cell("A1").value(notes);
   writeChartToWorkbook(workbook, chart);
-  await workbook.toFileAsync('./beats.xlsx');
+  await workbook.toFileAsync('./notes.xlsx');
 
   let keyCodeChart = keyCodeChartConversion(chart, freqIncrementForSubband);
   fs.writeFileSync('./chart.json', JSON.stringify(keyCodeChart, null, 2) , 'utf-8');
@@ -303,6 +303,6 @@ export async function fullConversion(mp3filePath) {
   //console.log(audioData.channelData[0]); // Float32Array
   //console.log(audioData.channelData[1]); // Float32Array
 
-  let keyCodeChart = await fftBeatPitchDetection(audioBuffer, samplingRatekHz);
+  let keyCodeChart = await fftNotePitchDetection(audioBuffer, samplingRatekHz);
   return  keyCodeChart;
 }
