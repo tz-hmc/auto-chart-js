@@ -5,10 +5,10 @@
  **/
 
 const defaultKeys = [
-    {keyCode: 37, color: 'purple'},
-    {keyCode: 40, color: 'blue'},
-    {keyCode: 38, color: 'red'},
-    {keyCode: 39, color: 'green'},
+    {keyCode: 37, color: '#dbabff'}, 
+    {keyCode: 40, color: '#9494ff'},
+    {keyCode: 38, color: '#ff7a91'},
+    {keyCode: 39, color: '#6effbb'},
 ];
 
 const PIXELS_PER_NOTE = 45;
@@ -18,11 +18,7 @@ const KEYS_Y_POS = 75;
 const pixelToNoteTimeMs = pixels => sixteenthNotePosToTimeMs(pixels/PIXELS_PER_NOTE)
 const noteTimeToPixelLocation = (topTime, noteTime) => timeMsToSixteenthNotePos(noteTime-topTime)*PIXELS_PER_NOTE;
 
-class Chart extends HTMLElement {
-    constructor() {
-        super();
-        this.reset();
-    }
+class AppChart extends HTMLElement {
     get canvasHeight() {
         return this.offsetHeight - 50;
     }
@@ -35,6 +31,26 @@ class Chart extends HTMLElement {
     get musicLength() {
         return sixteenthNotePosToTimeMs(this.notes.length);
     }
+    get score() {
+        return this.input?.score || 0;
+    }
+    get animationCallback() {
+        return (resolve) => (timeMs) => this.run(resolve, timeMs);
+    }
+    get canvas() {
+        return this.querySelector('canvas');
+    }
+    get context() {
+        return this.canvas.getContext('2d');
+    }
+    constructor() {
+        super();
+        this.reset();
+    }
+    connectedCallback() {
+        this.render();
+        this.drawKeys();
+    }
     reset() {
         this.notes = [];
         this.keys = defaultKeys;
@@ -44,26 +60,26 @@ class Chart extends HTMLElement {
         this.hasInput = false;
         this.animationRequest = null;
     }
-    connectedCallback() {
-        this.drawTemplate();
-        this.run = (resolve) => (timeMs = 0) => {
-            if(!this.startMs)
-                this.startMs = timeMs;
-
-            //const deltaTime = timeMs - this.lastMs;
-            this.lastMs = timeMs;
-
-            let ok = this.update(this.lastMs - this.startMs);
-            if (ok) {
-                this.animationRequest = requestAnimationFrame(this.run(resolve));
-            }
-            else {
-                console.log(this.lastMs - this.startMs);
-                cancelAnimationFrame(this.animationRequest);
-                if (this.hasInput) this.input.stop();
-                resolve();
-            }
-        };
+    render() {
+        this.innerHTML = `
+            <canvas width="${this.canvasWidth}" height="${this.canvasHeight}"></canvas>
+            <div id='score'>0</div>
+        `;
+    }
+    run(resolve, timeMs = 0) {
+        if(!this.startMs)
+            this.startMs = timeMs;
+        this.lastMs = timeMs;
+        let ok = this.update(this.lastMs - this.startMs);
+        if (ok) {
+            this.animationRequest = requestAnimationFrame(this.animationCallback(resolve));
+        }
+        else {
+            console.log(this.lastMs - this.startMs);
+            cancelAnimationFrame(this.animationRequest);
+            if (this.hasInput) this.input.stop();
+            resolve();
+        }
     }
     play(notes, hasInput, timeMs=0) {
         this.reset();
@@ -75,7 +91,7 @@ class Chart extends HTMLElement {
         }
         this.isPlaying = true;
         return new Promise((resolve, _reject) => {
-            this.run(resolve)(timeMs);
+            this.run(resolve, timeMs);
         });
     }
     update(currTime) {
@@ -83,23 +99,15 @@ class Chart extends HTMLElement {
             return false;
         }
         if (this.hasInput) {
-            this.drawScore(this.input.score);
+            this.input.updateScore();
+            this.drawScore();
         }
         this.draw(currTime);
         return true;
     }
-    drawTemplate() {
-        this.innerHTML = `
-            <canvas width="${this.canvasWidth}" height="${this.canvasHeight}"></canvas>
-            <div id='score'>0</div>
-        `;
-        this.canvas = this.querySelector('canvas');
-        this.context = this.canvas.getContext('2d');
-        this.drawKeys();
-    }
     drawKeys() {
         let centerY = KEYS_Y_POS;
-        this.keys.forEach((note, i) => this.drawCircle(i, centerY, true));
+        this.keys.forEach((_note, i) => this.drawCircle(i, centerY, true));
     }
     drawCircle(keyIndex, centerY, outline=false) {
         let circle = new Path2D();
@@ -157,10 +165,10 @@ class Chart extends HTMLElement {
             notesAtTime.forEach(note => this.drawNote(note, noteIndex, currTime))
         );
     }
-    drawScore(score) {
-        this.querySelector('#score').innerHTML = score;
+    drawScore() {
+        this.querySelector('#score').innerHTML = this.score;
     }
 }
 if (!customElements.get('app-chart')) {
-    customElements.define('app-chart', Chart);
+    customElements.define('app-chart', AppChart);
 }

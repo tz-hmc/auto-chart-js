@@ -57,7 +57,8 @@ class Input {
         this.keyupListener = event => {
             let noteIndex = Math.floor(timeMsToSixteenthNotePos(this.chart.lastMs - this.chart.startMs));
             this.pushCurrentNote(event.keyCode, noteIndex);
-            this.updateScore();
+            // should be updating on animation frame
+            //this.updateScore();
         };
         document.addEventListener('keydown', this.keydownListener);
         document.addEventListener('keyup', this.keyupListener);

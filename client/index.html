@@ -1,45 +1,30 @@
 <html>
 <head>
-    <title>Youtube Auto Chart</title>
+    <title>Auto Chart</title>
     <style>
         body {
-            background: #000;
-            display: flex;
-            color: #fff;
+            background: rgb(238, 238, 238);
+            color: rgb(50, 50, 50);
             font-family: sans-serif;
             font-size: 2em;
             text-align: center;
             overflow: hidden;
+            display: flex;
         }
         /* canvas {
             border: solid .2em #707070;
         } */
-        iframe {
-            top: 30px;
-            position: absolute;
-            z-index: 1;
-        }
-        file-input {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 100%;
-            background-color: #000;
-        }
-        app-chart {
-            width: 50%;
-            height: calc(100% - 60px);
-            border: 1px solid grey;
-        }
     </style>
 </head>
 <body>
-    <file-input></file-input>
-    <script src="./charts/default-chart.js"></script>
+    <app-manager />
+    <!-- <script src="./charts/default-chart.js"></script> -->
     <script src="./utils/utils.js"></script>
-    <script src="./input.js"></script>
-    <script src="./chart.js"></script>
-    <script src="./mp3-file-input.js"></script>
+    <script src="./components/input.js"></script>
+    <script src="./components/app-chart.js"></script>
+    <script src="./pages/chart-page.js"></script>
+    <script src="./pages/input-page.js"></script>
+    <script src="./pages/score-page.js"></script>
+    <script src="./app-manager.js"></script>
 </body>
 </html>
