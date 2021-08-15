@@ -213,7 +213,7 @@ function writeChartToWorkbook(workbook, chart) {
 // sampling rate: 44100
 // period size: 1024
 // minimum chart increment: 1/16 note (in 60bpm)
-async function fftNotePitchDetection(buffer, samplingRatekHz) {
+async function fftNotePitchDetection(buffer, samplingRatekHz, debug) {
 
   let periodSize = 1024;
   let paddedBufferSize = Math.ceil(buffer.length/periodSize)*periodSize;
@@ -257,17 +257,20 @@ async function fftNotePitchDetection(buffer, samplingRatekHz) {
   let chartIncrement = 1/16;
   let chart = chartConversion(buffer, notes, periodSize, chartIncrement, samplingRatekHz);
 
-  console.log(`writing to workbook`);
-
-  let workbook = await XlsxPopulate.fromBlankAsync();
-  workbook.addSheet("energy").cell("A1").value(energy);
-  workbook.addSheet("energyMA").cell("A1").value(energyMA);
-  workbook.addSheet("notes").cell("A1").value(notes);
-  writeChartToWorkbook(workbook, chart);
-  await workbook.toFileAsync('./notes.xlsx');
-
   let keyCodeChart = keyCodeChartConversion(chart, freqIncrementForSubband);
-  fs.writeFileSync('./chart.json', JSON.stringify(keyCodeChart, null, 2) , 'utf-8');
+
+  if (debug) {
+    console.log(`writing to workbook`);
+
+    let workbook = await XlsxPopulate.fromBlankAsync();
+    workbook.addSheet("energy").cell("A1").value(energy);
+    workbook.addSheet("energyMA").cell("A1").value(energyMA);
+    workbook.addSheet("notes").cell("A1").value(notes);
+    writeChartToWorkbook(workbook, chart);
+    await workbook.toFileAsync('./notes.xlsx');
+
+    fs.writeFileSync('./debug-chart.json', JSON.stringify(keyCodeChart, null, 2) , 'utf-8');
+  }
 
   return keyCodeChart;
 }
@@ -284,7 +287,7 @@ const readFile = (filepath) => {
   });
 };
 
-export async function fullConversion(mp3filePath) {
+export async function fullConversion(mp3filePath, debug=true) {
   console.log("decoding mp3 to wav");
 
   const decoder = new LAME.Lame({
@@ -303,6 +306,6 @@ export async function fullConversion(mp3filePath) {
   //console.log(audioData.channelData[0]); // Float32Array
   //console.log(audioData.channelData[1]); // Float32Array
 
-  let keyCodeChart = await fftNotePitchDetection(audioBuffer, samplingRatekHz);
+  let keyCodeChart = await fftNotePitchDetection(audioBuffer, samplingRatekHz, debug);
   return  keyCodeChart;
 }

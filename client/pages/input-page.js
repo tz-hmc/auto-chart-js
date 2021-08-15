@@ -1,9 +1,17 @@
 class InputPage extends HTMLElement {
+    setValues({numberPlayerBroadcast, finishedUpload}) {
+        this.numberPlayerBroadcast |= numberPlayerBroadcast;
+        this.finishedUpload |= finishedUpload;
+        this.rerender();
+    }
     get input() {
         return this.shadow.querySelector('input');
     }
-    get playButton() {
-        return this.shadow.querySelector('button#start');
+    get readyButton() {
+        return this.shadow.querySelector('button#ready');
+    }
+    get showReady() {
+        return this.finishedUpload;
     }
     constructor() {
         super();
@@ -16,8 +24,8 @@ class InputPage extends HTMLElement {
         this.registerEventListeners();
     }
     reset() {
-        this.chartNotes = [];
-        this.hidePlay = true;
+        this.numberPlayerBroadcast = 0;
+        this.finishedUpload = false;
     }
     render() {
         this.shadow.innerHTML = `
@@ -46,11 +54,11 @@ class InputPage extends HTMLElement {
         <div class='flex-container'>
             <p>select a mp3</p>
             <input id="file-input" type="file"></input>
-            <button id="start">start playing</button>
+            <button id="ready">ready</button>
         </div>`;
     }
     rerender() {
-        this.playButton.hidden = this.hidePlay;
+        this.readyButton.hidden = !this.showReady;
     }
     registerEventListeners() {
         this.input.onchange = (_e1) => {
@@ -63,47 +71,27 @@ class InputPage extends HTMLElement {
                 this.upload();
             }
         }
-        this.playButton.onclick = () => {
-            this.onPlayClick();
-        }
+        this.readyButton.onclick = () => {
+            this.dispatchEvent(new CustomEvent('input-page-ready-click', {
+                bubbles: true,
+                cancelable: false,
+                composed: true,
+                detail: {
+                    callback: this.playersReadyCallback
+                }
+            }));
+        };
     }
-    async upload() {
-        this.hidePlay = true;
-        this.rerender();
-        let response = await fetch('http://localhost:3333/song', {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'audio/mpeg',
-            },
-            body: this.buffer
-        })
-        this.chartNotes = await response.json();
-        this.hidePlay = false;
-        this.rerender();
+    upload() {
+        // should probably disable other buttons during upload
         this.dispatchEvent(new CustomEvent('input-page-file-upload', {
             bubbles: true,
             cancelable: false,
             composed: true, // breaks out of shadow dom
             detail: {
-                chartNotes: this.chartNotes
+                buffer: this.buffer
             }
         }));
-    }
-    async playMusicFile() {
-        let context = new AudioContext();
-        const source = context.createBufferSource();
-        source.buffer = await context.decodeAudioData(this.buffer);
-        source.connect(context.destination);
-        source.start();
-    }
-    onPlayClick() {
-        this.playMusicFile().then(() => {
-            this.dispatchEvent(new CustomEvent('input-page-play-click', {
-                bubbles: true,
-                cancelable: false,
-                composed: true,
-            }));
-        });
     }
 }
 if (!customElements.get('input-page')) {
