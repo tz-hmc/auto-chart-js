@@ -1,55 +1,58 @@
 const DEVELOPMENT_ADDR = 'ws://localhost:9000';
 class ConnectionManager {
-    constructor(playerManager) {
-        this.playerManager = playerManager;
+    constructor() {
+        this.playerManager = new PlayerManager();
 
         this.conn = null;
         this.roomCode = '';
 
-        this.peers = new Map();
         this.callbacks = {};
     }
     isConnected() {
         return !!(this.conn) && this.roomCode.length > 0;
     }
-    setCallback({create, join, broadcast, songReady, roomReady}) {
-        this.callbacks = {...this.callbacks, create, join, broadcast, songReady, roomReady};
+    setCallback({create, join, broadcast, songReady, roomReady, gameBroadcast}) {
+        this.callbacks = {create, join, broadcast, songReady, roomReady, gameBroadcast, ...this.callbacks};
     }
     // create room on server
     connect(address=DEVELOPMENT_ADDR) {
         this.conn = new WebSocket(address);
         this.conn.addEventListener('open', () => {
             this.initRoom();
-        })
+        });
         this.conn.addEventListener('message', event => {
             console.log(`message: ${event.data}`);
             let data = this.receive(event.data);
             if (data.type === 'room-created') {
                 this.setRoom(data.roomCode);
-                if (this.callbacks?.create) this.callbacks.create();
+                if (this.callbacks?.create) this.callbacks.create(data);
             }
             else if (data.type === 'room-joined') {
                 this.setRoom(data.roomCode);
-                if (this.callbacks?.join) this.callbacks.join();
+                if (this.callbacks?.join) this.callbacks.join(data);
             }
             else if (data.type === 'room-broadcast') {
                 this.setPlayers(data.peers);
-                if (this.callbacks?.broadcast) this.callbacks.broadcast();
+                if (this.callbacks?.broadcast) this.callbacks.broadcast(data);
             }
             else if (data.type === 'song-ready') {
-                if (this.callbacks?.songReady) this.callbacks.songReady();
+                if (this.callbacks?.songReady) this.callbacks.songReady(data);
             }
             else if (data.type === 'room-ready') {
-                if (this.callbacks?.roomReady) this.callbacks.roomReady();
+                if (this.callbacks?.roomReady) this.callbacks.roomReady(data);
             }
-        })
+            else if (data.type === 'game-broadcast') {
+                this.playerManager.updateRemote(data);
+                if (this.callbacks?.gameBroadcast) this.callbacks.gameBroadcast(data);
+            }
+        });
     }
     setPlayers(peers) {
-        const me = peers.you;
-        const clients = peers.peers.filter(id => me !== id);
-        this.playerManager.add(new Player(me));
+        const localClientId = peers.you;
+        const clients = peers.peers.filter(id => localClientId !== id);
+        this.playerManager.addLocal(localClientId, this);
         clients.forEach((id) => {
-            this.playerManager.add(new Player(id))
+            this.playerManager.addRemote(id, this)
         });
     }
     receive(msg) {
@@ -76,6 +79,13 @@ class ConnectionManager {
         this.send({
             type: 'ready',
             roomCode: this.roomCode
+        });
+    }
+    sendUpdate({score, currNoteIndices}) {
+        this.send({
+            type: 'game-update',
+            score,
+            currNoteIndices
         });
     }
     initRoom() {

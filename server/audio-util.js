@@ -3,7 +3,7 @@
 * http://archive.gamedev.net/archive/reference/programming/features/notedetection/
 *
 * INCOMPLETE
-* 
+*
 * TODO:
 * - ignore the DC offset (zeroth bin)
 * - apply window function (?)
@@ -78,7 +78,7 @@ function simpleMovingAverage(arr, windowSize) {
 function energyComparison(energy, energyMA, freqIncrement) {
   let C = 5; //250
   let notes = [];
-  
+
   console.log('energy size | rows: ', energy.length, "columns: ",  energy[0].length);
   console.log('energyMA size | rows: ', energyMA.length, "columns: ",  energyMA[0].length);
   console.log('freqIncrement for subband is ', freqIncrement);
@@ -105,7 +105,7 @@ function getNoteLength(energy, energyMA, C, timeIndex, freqIndex) {
   let energyAtFreq = energy[timeIndex][freqIndex];
   let length = 1;
   // TODO: replace with something that actually makes sense
-  while (timeIndex < energy.length && 
+  while (timeIndex < energy.length &&
     energyAtFreq > 2*C*energyMA[timeIndex][freqIndex]) {
     length += 1;
     timeIndex += 1;
@@ -136,7 +136,7 @@ function plotFFT(fftOutput, samplingRatekHz) {
 // Generate the chart
 function chartConversion(buffer, notes, periodSize, chartIncrement, samplingRatekHz) {
   let totalTimeSec = buffer.length/(samplingRatekHz*1000);
-  
+
   // sanity checks
   let notesIncrement = totalTimeSec/notes.length;
   let expectedNotesIncrement = totalTimeSec/(buffer.length/periodSize);
@@ -294,7 +294,7 @@ export async function fullConversion(mp3filePath, debug=true) {
     output: "./out.wav",
   }).setFile(mp3filePath);
   await decoder.decode();
-  
+
   let fileBuffer = await readFile("./out.wav");
   let audioData = await WavDecoder.decode(fileBuffer);
   let samplingRatekHz = audioData.sampleRate/1000;

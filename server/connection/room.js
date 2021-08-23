@@ -50,12 +50,19 @@ export class Room {
             });
         }
     }
+    gameBroadcast(updatedClient, data) {
+        this.clients.forEach(client => {
+            if (client.id !== updatedClient.id) {
+                client.gameBroadcast(updatedClient.id, data)
+            }
+        })
+    }
 }
 export function roomCode() {
     let len = 4;
     let chars = 'abcdefghijklmnopqrstuvwxyz';
     let id = '';
-    while(len--) {
+    while (len--) {
         id += chars[Math.random() * chars.length | 0];
     }
     return id;

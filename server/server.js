@@ -27,7 +27,12 @@ websocketServer.on('connection', conn => {
             roomManager.joinRoom(data.roomCode, client);
         }
         else if (data.type === 'ready') {
-            roomManager.clientReady(client);
+            let room = roomManager.getRoom(client);
+            room.clientReady(client);
+        }
+        else if (data.type === 'game-update') {
+            let room = roomManager.getRoom(client);
+            room.gameBroadcast(client, data);
         }
     });
     conn.on('close', () => {
@@ -50,7 +55,7 @@ server.put("/song/:roomId", function(req, res) {
         req.on('data', function(data) {
             console.log("writing mp3... \n");
             mp3File.write(data);
-        }); 
+        });
         req.on('end', async function() {
             console.log("finish writing mp3...\n");
             mp3File.end();
@@ -73,6 +78,6 @@ server.put("/song/:roomId", function(req, res) {
 server.use('/charts', express.static('./server/charts'));
 server.use('/songs', express.static('./server/songs'));
 server.use('/', express.static('./client'));
-server.listen(port, 
+server.listen(port,
     () => console.log(`Listening on http://${host}:${port}/`)
 );

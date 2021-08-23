@@ -3,8 +3,7 @@ export class RoomManager {
     constructor() {
         this.rooms = new Map();
     }
-    newRoom(client) {
-        let code = roomCode();
+    newRoom(client, code=roomCode()) {
         if (this.rooms.has(code))
             throw new Error(`room code ${code} already exists`);
         const room = new Room(code);
@@ -20,10 +19,12 @@ export class RoomManager {
         let room = this.rooms.get(roomCode);
         if (!room) {
             console.error('room did not exist');
-            return;
+            this.newRoom(client, roomCode);
         }
-        room.join(client);
-        room.broadcast();
+        else {
+            room.join(client);
+            room.broadcast();
+        }
         return room;
     }
     cleanRoom(clientToRemove) {
@@ -38,11 +39,12 @@ export class RoomManager {
             }
         }
     }
-    clientReady(client) {
+    getRoom(client) {
         const room = client.room;
         if (room) {
-            room.clientReady(client);
+            return room;
         }
+        throw new Error('client room is not defined');
     }
     songReady(roomCode) {
         const room = this.rooms.get(roomCode);

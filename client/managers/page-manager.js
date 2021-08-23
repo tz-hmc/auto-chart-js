@@ -1,8 +1,7 @@
 const pageManagerPages = ['input-page', 'chart-page', 'score-page'];
 class PageManager extends HTMLElement {
     pageIndex = 0;
-    playerManager = new PlayerManager();
-    connectionManager = new ConnectionManager(this.playerManager);
+    connectionManager = new ConnectionManager();
     fileManager = new FileManager();
     constructor() {
         super();
@@ -22,8 +21,6 @@ class PageManager extends HTMLElement {
     reset() {
         this.pageIndex = 0;
         this.localChart = [];
-        this.localScore = 0;
-        this.enemyScore = 0;
     }
     render() {
         this.innerHTML = `
@@ -37,25 +34,30 @@ class PageManager extends HTMLElement {
     getRef(pageName) {
         return this.querySelector(pageName);
     }
-    broadcastCallback() {
+    broadcastCallback({}) {
         this.getRef('input-page')?.setValues({finishedBroadcast: true});
     }
-    async songReadyCallback() {
+    async songReadyCallback({}) {
         let promises = Promise.all([
-            this.fileManager.downloadChart(this.connectionManager.roomCode), 
+            this.fileManager.downloadChart(this.connectionManager.roomCode),
             this.fileManager.downloadMp3(this.connectionManager.roomCode)
         ]);
         await promises;
         this.getRef('input-page')?.setValues({finishedUpload: true});
     }
-    async roomReadyCallback() {
+    async roomReadyCallback({}) {
         await this.fileManager.playMp3();
+        let songStartTimeMs = Date.now();
         this.goNextPage();
+        this.getRef('chart-page')?.setValues({
+            playerManager: this.connectionManager.playerManager,
+            chart: this.fileManager.chart,
+            songStartTimeMs
+        });
         this.getRef('chart-page')?.render();
-        this.getRef('chart-page')?.start({chart: this.fileManager.chart});
+        this.getRef('chart-page')?.start();
     }
     registerEventListeners() {
-        // input-page events
         this.addEventListener('input-page-file-upload', this.onFileUploadClicked.bind(this));
         this.addEventListener('input-page-ready-click', this.onReadyClicked.bind(this));
         this.addEventListener('chart-page-play-stop', this.onPlayStopped.bind(this));
@@ -70,9 +72,11 @@ class PageManager extends HTMLElement {
     onReadyClicked({detail}) {
         this.connectionManager.sendReady();
     }
-    onPlayStopped({detail: {localScore, enemyScore}}) {
+    onPlayStopped({detail}) {
+        let localScore = this.connectionManager.playerManager.LocalPlayer.score;
+        let enemyScores = this.connectionManager.playerManager.RemotePlayers.map(player => player.score);
         this.goNextPage();
-        this.getRef('score-page')?.setValues({localScore: this.localScore, enemyScore: this.enemyScore});
+        this.getRef('score-page')?.setValues({localScore: localScore, enemyScore: enemyScores[0]});
         this.getRef('score-page')?.render();
     }
 }

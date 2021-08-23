@@ -70,7 +70,7 @@ class InputPage extends HTMLElement {
                 this.buffer = reader.result;
                 this.upload();
             }
-        }
+        };
         this.readyButton.onclick = () => {
             this.dispatchEvent(new CustomEvent('input-page-ready-click', {
                 bubbles: true,

@@ -21,7 +21,7 @@ export class Client {
         this.room = room;
         this.send({
             type: 'room-created',
-            roomCode: this.room.code 
+            roomCode: this.room.code
         });
     }
     joinRoom(room) {
@@ -55,7 +55,15 @@ export class Client {
     clientReady() {
         this.send({
             type: 'room-ready',
-            //charts: [], 
+            //charts: [],
+        });
+    }
+    gameBroadcast(otherClientId, data) {
+        this.send({
+            type: 'game-broadcast',
+            clientId: otherClientId,
+            score: data.score,
+            currNoteIndices: data.currNoteIndices
         });
     }
 }
