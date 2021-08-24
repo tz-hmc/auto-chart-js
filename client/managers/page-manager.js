@@ -78,6 +78,7 @@ class PageManager extends HTMLElement {
         this.goNextPage();
         this.getRef('score-page')?.setValues({localScore: localScore, enemyScore: enemyScores[0]});
         this.getRef('score-page')?.render();
+        this.connectionManager.sendFinish();
     }
 }
 if (!customElements.get('page-manager')) {

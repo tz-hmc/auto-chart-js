@@ -34,6 +34,10 @@ websocketServer.on('connection', conn => {
             let room = roomManager.getRoom(client);
             room.gameBroadcast(client, data);
         }
+        else if (data.type === 'game-finish') {
+            let room = roomManager.getRoom(client);
+            room.reset();
+        }
     });
     conn.on('close', () => {
         console.log('closing... \n');

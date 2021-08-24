@@ -58,6 +58,9 @@ export class Client {
             //charts: [],
         });
     }
+    resetReady() {
+        this.playerIsReady = false;
+    }
     gameBroadcast(otherClientId, data) {
         this.send({
             type: 'game-broadcast',

@@ -57,6 +57,13 @@ export class Room {
             }
         })
     }
+    reset() {
+        this.songIsReady = false;
+        let clients = Array.from(this.clients);
+        clients.forEach(client => {
+            client.resetReady();
+        });
+    }
 }
 export function roomCode() {
     let len = 4;

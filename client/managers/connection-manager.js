@@ -88,6 +88,11 @@ class ConnectionManager {
             currNoteIndices
         });
     }
+    sendFinish() {
+        this.send({
+            type: 'game-finish'
+        });
+    }
     initRoom() {
         this.roomCode = window.location.hash.split('#')[1];
         if (this.roomCode) {

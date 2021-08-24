@@ -10,8 +10,17 @@ class InputPage extends HTMLElement {
     get readyButton() {
         return this.shadow.querySelector('button#ready');
     }
+    get spinner() {
+        return this.shadow.querySelector('loading-spinner');
+    }
     get showReady() {
         return this.finishedUpload;
+    }
+    get showSpinner() {
+        return this.startedUpload && !this.finishedUpload;
+    }
+    get readyText() {
+        return this.readyClicked ? "waiting for second player" : "ready";
     }
     constructor() {
         super();
@@ -25,7 +34,9 @@ class InputPage extends HTMLElement {
     }
     reset() {
         this.numberPlayerBroadcast = 0;
+        this.startedUpload = false;
         this.finishedUpload = false;
+        this.readyClicked = false;
     }
     render() {
         this.shadow.innerHTML = `
@@ -50,18 +61,27 @@ class InputPage extends HTMLElement {
                 padding: 3px;
                 border: 1px solid white;
             }
+            loading-spinner {
+                height: 60px;
+                width: 60px;
+            }
         </style>
         <div class='flex-container'>
             <p>select a mp3</p>
             <input id="file-input" type="file"></input>
-            <button id="ready">ready</button>
+            <button id="ready"></button>
+            <loading-spinner></loading-spinner>
         </div>`;
     }
     rerender() {
         this.readyButton.hidden = !this.showReady;
+        this.readyButton.textContent = this.readyText;
+        this.spinner.hidden = !this.showSpinner;
     }
     registerEventListeners() {
         this.input.onchange = (_e1) => {
+            this.startedUpload = true;
+            this.rerender();
             const reader = new FileReader();
             for (let file of this.input.files) {
                 reader.readAsArrayBuffer(file);
@@ -72,13 +92,12 @@ class InputPage extends HTMLElement {
             }
         };
         this.readyButton.onclick = () => {
+            this.readyClicked = true;
+            this.rerender();
             this.dispatchEvent(new CustomEvent('input-page-ready-click', {
                 bubbles: true,
                 cancelable: false,
-                composed: true,
-                detail: {
-                    callback: this.playersReadyCallback
-                }
+                composed: true
             }));
         };
     }

@@ -21,7 +21,7 @@ class AppChart extends HTMLElement {
         return this.offsetWidth;
     }
     get columnSize() {
-        return this.canvas.offsetWidth/this.keys.length;
+        return this.offsetWidth/this.keys.length;
     }
     get musicLength() {
         return sixteenthNotePosToTimeMs(this.notes.length);
