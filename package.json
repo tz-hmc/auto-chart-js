@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "serve": "node ./server/server.js",
+    "start": "node ./server/server.js",
     "create-chart": "node ./server/test/audio-util-test.js"
   },
   "author": "Tina Z",
