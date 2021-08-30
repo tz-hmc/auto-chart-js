@@ -35,10 +35,28 @@ class ScorePage extends HTMLElement {
             .flex-container > * {
                 margin: 50px;
             }
+            .winner {
+                animation: blink 1s ease-in infinite;
+            }
+            @keyframes blink {
+                0% {
+                    border: 6px dashed yellow;
+                }
+                100% {
+                    border: 1px dotted white;
+                }
+            }
+            .loser {
+                border: 1px dashed white;
+            }
+            .score {
+                border-radius: 40%;
+                padding: 20px;
+            }
         </style>
         <div class='flex-container'>
-            <div>${this.localScore}</div>
-            <div>${this.enemyScore}</div>
+            <div class='${(this.localScore > this.enemyScore) ? 'winner' : 'loser'} score'>${this.localScore}</div>
+            <div class='${(this.enemyScore > this.localScore) ? 'winner' : 'loser'} score'>${this.enemyScore}</div>
         </div>`;
     }
 }

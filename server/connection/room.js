@@ -3,6 +3,7 @@ export class Room {
         this.code = roomCode;
         this.clients = new Set();
         this.songIsReady = false;
+        this.songIsPlaying = false;
     }
     joinFirst(client) {
         if (client.room) {
@@ -51,6 +52,7 @@ export class Room {
         }
     }
     gameBroadcast(updatedClient, data) {
+        this.songIsPlaying = true;
         this.clients.forEach(client => {
             if (client.id !== updatedClient.id) {
                 client.gameBroadcast(updatedClient.id, data)
@@ -58,11 +60,14 @@ export class Room {
         })
     }
     reset() {
-        this.songIsReady = false;
-        let clients = Array.from(this.clients);
-        clients.forEach(client => {
-            client.resetReady();
-        });
+        if (this.songIsPlaying) {
+            this.songIsReady = false;
+            this.songIsPlaying = false;
+            let clients = Array.from(this.clients);
+            clients.forEach(client => {
+                client.resetReady();
+            });
+        }
     }
 }
 export function roomCode() {

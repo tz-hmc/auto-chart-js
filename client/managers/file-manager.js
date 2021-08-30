@@ -4,14 +4,18 @@ class FileManager {
         this.chart = [];
     }
     async uploadMp3(roomCode, buffer) {
-        await fetch(`http://localhost:3333/song/${roomCode}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'audio/mpeg',
-            },
-            body: buffer
-        });
-        return;
+        try {
+            await fetch(`http://localhost:3333/song/${roomCode}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'audio/mpeg',
+                },
+                body: buffer
+            });
+        }
+        catch (err) {
+            alert('Please check file format (should be mp3) and size (12MB limit).');
+        }
     }
     async downloadMp3(roomCode) {
         let res = await fetch(`http://localhost:3333/songs/${roomCode}.mp3`, {

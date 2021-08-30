@@ -21,6 +21,7 @@
   },
   "devDependencies": {
     "nodeplotlib": "^0.7.5",
+    "uglify-js": "^3.14.1",
     "xlsx-populate": "^1.21.0"
   }
 }

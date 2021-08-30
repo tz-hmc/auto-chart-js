@@ -25,16 +25,11 @@ export class Client {
         });
     }
     joinRoom(room) {
-        if(!!room) {
-            this.room = room;
-            this.send({
-                type: 'room-joined',
-                roomCode: this.room.code
-            })
-        }
-        else {
-            // create room or notify failure?
-        }
+        this.room = room;
+        this.send({
+            type: 'room-joined',
+            roomCode: this.room.code
+        })
     }
     broadcast() {
         let otherClients = [...this.room.clients];

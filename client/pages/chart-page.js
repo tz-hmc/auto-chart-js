@@ -36,10 +36,10 @@ class ChartPage extends HTMLElement {
             app-chart {
                 width: calc(45%);
                 height: calc(95%);
-                border: 1px solid grey;
+                border: 1px solid #e3e3e3;
             }
             app-chart.local {
-                border: 1px solid white;
+                border: 2px solid white;
             }
         </style>
         <div class='flex-container'>

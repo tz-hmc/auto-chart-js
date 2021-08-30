@@ -7,7 +7,9 @@ import { fullConversion } from './audio-util.js';
 import { RoomManager } from './connection/room-manager.js';
 import { WebSocketServer } from 'ws';
 
-// TODO: how does nodejs server handle simul requests? is this thread safe?
+const FILE_BYTES_SIZE_LIMIT = 12*1024*1024; 
+// 320kbps @ 5min audio compressed mp3 ~= 12 MB size limit
+
 var roomManager = new RoomManager();
 
 const websocketServer = new WebSocketServer({
@@ -49,33 +51,46 @@ const server = express();
 var host = '127.0.0.1',
     port = 3333;
 
-server.put("/song/:roomId", function(req, res) {
-    // need to check inputs, there could be some vulnerability here
+server.put("/song/:roomId", function(req, res, next) {
     let roomId = req.params?.roomId;
     let mp3FilePath = `./server/songs/${roomId}.mp3`;
     let mp3File = fs.createWriteStream(mp3FilePath);
-
+    let bufferCount = 0;
     mp3File.on('open', function(fd) {
         req.on('data', function(data) {
-            console.log("writing mp3... \n");
-            mp3File.write(data);
+            bufferCount += Buffer.byteLength(data); 
+            if (bufferCount > FILE_BYTES_SIZE_LIMIT) {
+                console.error(`bufferCount ${bufferCount} > limit ${FILE_BYTES_SIZE_LIMIT}`);
+                req.destroy();
+                return next(new Error(`file size limit`));
+            }
+            else {
+                console.log("writing mp3... \n");
+                mp3File.write(data);
+            }
         });
         req.on('end', async function() {
             console.log("finish writing mp3...\n");
             mp3File.end();
-            let chart = await fullConversion(mp3FilePath, false);
+            let chart = [];
             let chartFilePath = `./server/charts/${roomId}.json`;
-            let chartFile = fs.createWriteStream(chartFilePath)
-            chartFile.on('open', function(fd) {
-                console.log("writing chart... \n");
-                chartFile.write(JSON.stringify(chart));
-                chartFile.end();
-            });
-            chartFile.on('close', function(fd) {
-                res.status(200);
-                res.send();
-                roomManager.songReady(roomId);
-            })
+            try {
+                chart = await fullConversion(mp3FilePath, false);
+                let chartFile = fs.createWriteStream(chartFilePath);
+                chartFile.on('open', function(fd) {
+                    console.log("writing chart... \n");
+                    chartFile.write(JSON.stringify(chart));
+                    chartFile.end();
+                });
+                chartFile.on('close', function(fd) {
+                    console.log('chart file ready...\n');
+                    roomManager.songReady(roomId);
+                    res.status(200).send();
+                });
+            }
+            catch (err) {
+                return next(err);
+            }
         });
     });
 });

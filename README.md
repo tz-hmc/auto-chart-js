@@ -11,7 +11,8 @@ Auto-chart-js generates a reasonable looking rhythm game given a song uploaded i
 1. Multiplayer with Websockets (done)
 2. Input animations (done)
 3. Generated chart playability (ongoing)
-4. Small UX tweaks like spinner?
+4. Small UX tweaks like spinner (done)
+5. Hosting - vulcanize (done), set up on AWS (ongoing)
 
 # Notes
 Provided as a proof of concept & features may be missing, client side code is raw Web Components without a js framework.
