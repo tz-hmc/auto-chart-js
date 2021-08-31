@@ -8,6 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "preinstall": "sudo apt-get install lame",
     "start": "node ./server/server.js",
+    "zip": "git archive -v -o app.zip --format=zip HEAD",
     "uglify": "node ./uglify.js",
     "create-chart": "node ./server/test/audio-util-test.js"
   },
