@@ -6,52 +6,19 @@ import { Client } from './connection/client.js';
 import { fullConversion } from './audio-util.js';
 import { RoomManager } from './connection/room-manager.js';
 import { WebSocketServer } from 'ws';
+import { createServer } from 'http';
 
 const FILE_BYTES_SIZE_LIMIT = 12*1024*1024; 
 // 320kbps @ 5min audio compressed mp3 ~= 12 MB size limit
 
-var roomManager = new RoomManager();
-
-const websocketServer = new WebSocketServer({
-    port: 9000,
-    //path: "/websockets",
-});
-websocketServer.on('connection', conn => {
-    console.log('connecting... \n');
-    const client = new Client(conn);
-    conn.on('message', msg => {
-        console.log(`receiving message... ${msg}`);
-        let data = client.receive(msg);
-        if (data.type === 'create-room') {
-            roomManager.newRoom(client);
-        }
-        else if (data.type === 'join-room') {
-            roomManager.joinRoom(data.roomCode, client);
-        }
-        else if (data.type === 'ready') {
-            let room = roomManager.getRoom(client);
-            room.clientReady(client);
-        }
-        else if (data.type === 'game-update') {
-            let room = roomManager.getRoom(client);
-            room.gameBroadcast(client, data);
-        }
-        else if (data.type === 'game-finish') {
-            let room = roomManager.getRoom(client);
-            room.reset();
-        }
-    });
-    conn.on('close', () => {
-        console.log('closing... \n');
-        roomManager.cleanRoom(client);
-    });
-})
-
-const server = express();
+// AWS EB documentation:
+// The default NGINX configuration forwards traffic to an
+// upstream server that's named nodejs at 127.0.0.1:8080
+const app = express();
 var host = '127.0.0.1',
-    port = 3333;
+    port = 8080;
 
-server.put("/song/:roomId", function(req, res, next) {
+app.put("/song/:roomId", function(req, res, next) {
     let roomId = req.params?.roomId;
     let mp3FilePath = `./server/songs/${roomId}.mp3`;
     let mp3File = fs.createWriteStream(mp3FilePath);
@@ -94,9 +61,48 @@ server.put("/song/:roomId", function(req, res, next) {
         });
     });
 });
-server.use('/charts', express.static('./server/charts'));
-server.use('/songs', express.static('./server/songs'));
-server.use('/', express.static('./client'));
-server.listen(port,
+app.use('/charts', express.static('./server/charts'));
+app.use('/songs', express.static('./server/songs'));
+app.use('/', express.static('./client'));
+
+let httpServer = createServer();
+httpServer.on('request', app);
+
+let roomManager = new RoomManager();
+const websocketServer = new WebSocketServer({
+    server: httpServer
+});
+websocketServer.on('connection', conn => {
+    console.log('connecting... \n');
+    const client = new Client(conn);
+    conn.on('message', msg => {
+        console.log(`receiving message... ${msg}`);
+        let data = client.receive(msg);
+        if (data.type === 'create-room') {
+            roomManager.newRoom(client);
+        }
+        else if (data.type === 'join-room') {
+            roomManager.joinRoom(data.roomCode, client);
+        }
+        else if (data.type === 'ready') {
+            let room = roomManager.getRoom(client);
+            room.clientReady(client);
+        }
+        else if (data.type === 'game-update') {
+            let room = roomManager.getRoom(client);
+            room.gameBroadcast(client, data);
+        }
+        else if (data.type === 'game-finish') {
+            let room = roomManager.getRoom(client);
+            room.reset();
+        }
+    });
+    conn.on('close', () => {
+        console.log('closing... \n');
+        roomManager.cleanRoom(client);
+    });
+})
+
+httpServer.listen(port,
     () => console.log(`Listening on http://${host}:${port}/`)
 );

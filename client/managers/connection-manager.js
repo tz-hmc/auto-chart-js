@@ -1,4 +1,3 @@
-const DEVELOPMENT_ADDR = 'ws://localhost:9000';
 class ConnectionManager {
     constructor() {
         this.playerManager = new PlayerManager();
@@ -15,7 +14,7 @@ class ConnectionManager {
         this.callbacks = {create, join, broadcast, songReady, roomReady, gameBroadcast, ...this.callbacks};
     }
     // create room on server
-    connect(address=DEVELOPMENT_ADDR) {
+    connect(address=WEB_SOCKET_URL) {
         this.conn = new WebSocket(address);
         this.conn.addEventListener('open', () => {
             this.initRoom();

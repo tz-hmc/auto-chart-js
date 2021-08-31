@@ -5,7 +5,7 @@ class FileManager {
     }
     async uploadMp3(roomCode, buffer) {
         try {
-            await fetch(`http://localhost:3333/song/${roomCode}`, {
+            await fetch(SONG_UPLOAD_URL(roomCode), {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'audio/mpeg',
@@ -18,13 +18,13 @@ class FileManager {
         }
     }
     async downloadMp3(roomCode) {
-        let res = await fetch(`http://localhost:3333/songs/${roomCode}.mp3`, {
+        let res = await fetch(SONG_DOWNLOAD_URL(roomCode), {
             method: 'GET'
         });
         this.fileBuffer = await res.arrayBuffer();
     }
     async downloadChart(roomCode) {
-        let res = await fetch(`http://localhost:3333/charts/${roomCode}.json`, {
+        let res = await fetch(CHART_DOWNLOAD_URL(roomCode), {
             method: 'GET'
         });
         this.chart = await res.json();
