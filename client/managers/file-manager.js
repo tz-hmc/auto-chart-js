@@ -14,7 +14,7 @@ class FileManager {
             });
         }
         catch (err) {
-            alert('Please check file format (should be mp3) and size (12MB limit).');
+            alert('Please check file format (should be mp3) and size (20MB limit).');
         }
     }
     async downloadMp3(roomCode) {

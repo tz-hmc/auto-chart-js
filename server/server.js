@@ -8,8 +8,9 @@ import { RoomManager } from './connection/room-manager.js';
 import { WebSocketServer } from 'ws';
 import { createServer } from 'http';
 
-const FILE_BYTES_SIZE_LIMIT = 12*1024*1024; 
+const FILE_BYTES_SIZE_LIMIT = 20*1024*1024; 
 // 320kbps @ 5min audio compressed mp3 ~= 12 MB size limit
+// allowing up to 20MB for now
 
 // AWS EB documentation:
 // The default NGINX configuration forwards traffic to an
