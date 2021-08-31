@@ -11,12 +11,10 @@
 */
 
 import * as fs from "fs";
-
 import FFT from "fft.js";
-import plotlib from "nodeplotlib";
 import LAME from "node-lame";
-import XlsxPopulate from "xlsx-populate";
 import WavDecoder from 'wav-decoder';
+import XlsxPopulate from "xlsx-populate";
 
 function runFFT(buffer) {
   let size = buffer.length;
@@ -115,22 +113,6 @@ function getNoteLength(energy, energyMA, C, timeIndex, freqIndex) {
 
 function getFrequencyIncrement(samplingRatekHz, fftSize) {
   return (samplingRatekHz / (2 * fftSize)) * 1000;
-}
-
-function plotFFT(fftOutput, samplingRatekHz) {
-  console.log(fftOutput);
-  let fftSize = fftOutput.length;
-  let x = [];
-  for (let i = 0; i < fftSize; i++)
-    x.push(i * getFrequencyIncrement(samplingRatekHz, fftSize));
-  plotlib.plot([
-    {
-      x: x,
-      y: fftOutput,
-      type: "line",
-      name: "output",
-    },
-  ]);
 }
 
 // Generate the chart
