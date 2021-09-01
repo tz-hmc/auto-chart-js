@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "preinstall": "sudo apt-get install lame",
+    "install": "sudo apt-get install lame && npm install",
     "start": "node ./server/server.js",
     "zip": "git archive -v -o app.zip --format=zip HEAD",
     "uglify": "node ./uglify.js",
