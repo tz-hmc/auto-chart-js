@@ -1,4 +1,8 @@
 // thanks to https://www.youtube.com/watch?v=Zdr6SJZC9ao
+// https://stackoverflow.com/questions/34808925/express-and-websocket-listening-on-the-same-port/34838031#34838031
+// https://stackoverflow.com/questions/18908426/increasing-client-max-body-size-in-nginx-conf-on-aws-elastic-beanstalk
+// https://shuheikagawa.com/blog/2019/04/25/keep-alive-timeout/
+
 import path from 'path';
 import express from 'express';
 import fs from 'fs';
@@ -67,6 +71,9 @@ app.use('/songs', express.static('./server/songs'));
 app.use('/', express.static('./client'));
 
 let httpServer = createServer();
+httpServer.keepAliveTimeout = 61 * 1000;
+httpServer.headersTimeout = 65 * 1000;
+
 httpServer.on('request', app);
 
 let roomManager = new RoomManager();
