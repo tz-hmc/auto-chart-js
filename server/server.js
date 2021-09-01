@@ -25,6 +25,8 @@ var host = '127.0.0.1',
 
 app.put("/song/:roomId", function(req, res, next) {
     let roomId = req.params?.roomId;
+    console.log(`processing ${roomId} song upload request...`);
+    
     let mp3FilePath = `./server/songs/${roomId}.mp3`;
     let mp3File = fs.createWriteStream(mp3FilePath);
     let bufferCount = 0;
@@ -71,8 +73,8 @@ app.use('/songs', express.static('./server/songs'));
 app.use('/', express.static('./client'));
 
 let httpServer = createServer();
-httpServer.keepAliveTimeout = 61 * 1000;
-httpServer.headersTimeout = 65 * 1000;
+httpServer.keepAliveTimeout = 2 * 60 * 1000;
+httpServer.headersTimeout = 2 * 65 * 1000;
 
 httpServer.on('request', app);
 
