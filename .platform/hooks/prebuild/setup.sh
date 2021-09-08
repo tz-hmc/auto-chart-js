@@ -1,3 +1,4 @@
+#!/bin/bash
 echo "installing tools needed to build LAME"
 yum update
 yum install gcc gcc-c++ automake autoconf libtool yasm nasm git subversion
@@ -12,4 +13,3 @@ echo "installing LAME"
 make
 make install
 echo "finished LAME install"
-# service nginx reload
