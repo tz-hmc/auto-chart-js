@@ -1,2 +1,3 @@
+echo "Installing LAME"
 sudo yum install lame
-service nginx reload
+echo "Finished LAME install"
