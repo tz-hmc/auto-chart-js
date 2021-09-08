@@ -14,3 +14,5 @@ make
 make install
 echo "finished LAME install"
 ldconfig
+echo "LAME output"
+lame
