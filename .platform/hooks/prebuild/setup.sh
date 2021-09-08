@@ -13,3 +13,4 @@ echo "installing LAME"
 make
 make install
 echo "finished LAME install"
+ldconfig
