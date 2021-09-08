@@ -1,3 +1,3 @@
 #!/bin/bash
-sudo apt-get install lame
+sudo yum install lame
 service nginx reload
