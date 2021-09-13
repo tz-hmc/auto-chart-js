@@ -16,3 +16,4 @@ echo "finished LAME install"
 ldconfig
 echo "LAME output"
 lame
+exit 0
