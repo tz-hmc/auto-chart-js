@@ -15,16 +15,28 @@ import FFT from "fft.js";
 import LAME from "node-lame";
 import WavDecoder from 'wav-decoder';
 import XlsxPopulate from "xlsx-populate";
+import {NoteRowConverter, getFrequencyIncrement} from "./note-row-converter.js";
+
+// fromComplexArray ignores the imaginary values see github: 
+// https://github.com/indutny/fft.js/blob/4a18cf88fcdbd4ad5acca6eaea06a0b462047835/lib/fft.js
+const fromComplexArray = (complex) => {
+  var res = new Array(complex.length >>> 1);
+  // for (var i = 0; i < complex.length; i += 2)
+  //   res[i >>> 1] = complex[i];
+  for (var i = 0; i<complex.length; i += 2)
+    res[i/2] = Math.sqrt(complex[i]*complex[i] + complex[i+1]*complex[i+1])
+  return res;
+};
 
 function runFFT(buffer) {
   let size = buffer.length;
   let fft = new FFT(size);
-  let realOutput = new Array(size);
   let complexOutput = fft.createComplexArray();
   let realInput = [].slice.call(buffer).map((val) => val || 0);
   realInput = realInput.slice(0, size);
   fft.realTransform(complexOutput, realInput);
-  fft.fromComplexArray(complexOutput, realOutput);
+  let realOutput = fromComplexArray(complexOutput);
+  //fft.fromComplexArray(complexOutput, realOutput);
   return realOutput;
 }
 
@@ -73,21 +85,19 @@ function simpleMovingAverage(arr, windowSize) {
   return paddedArray;
 }
 
-function energyComparison(energy, energyMA, freqIncrement) {
-  let C = 5; //250
+function energyComparison(energy, energyMA) {
+  let C = 7; //5; //250
   let notes = [];
 
   console.log('energy size | rows: ', energy.length, "columns: ",  energy[0].length);
   console.log('energyMA size | rows: ', energyMA.length, "columns: ",  energyMA[0].length);
-  console.log('freqIncrement for subband is ', freqIncrement);
 
   for (var i = 0; i < energy.length; i++) {
     let currNote = [];
     energy[i].forEach((energyAtFreq, j) => {
-      if (energyAtFreq > C * energyMA[i][j]) {
-        // just a check
-        let noteFreq = j * freqIncrement;
-        let noteLength = getNoteLength(energy, energyMA, C, i, j);
+      let threshold = C * energyMA[i][j];
+      if (energyAtFreq > threshold) {
+        let noteLength = getNoteLength(energy, energyMA, C, i, j, threshold);
         currNote.push(noteLength);
       }
       else {
@@ -99,20 +109,20 @@ function energyComparison(energy, energyMA, freqIncrement) {
   return notes;
 }
 
-function getNoteLength(energy, energyMA, C, timeIndex, freqIndex) {
-  let energyAtFreq = energy[timeIndex][freqIndex];
+function getNoteLength(energy, energyMA, C, timeIndex, freqIndex, initThreshold) {
   let length = 1;
+  let peak = energy[timeIndex][freqIndex];
   // TODO: replace with something that actually makes sense
   while (timeIndex < energy.length &&
-    energyAtFreq > 2*C*energyMA[timeIndex][freqIndex]) {
+    energy[timeIndex][freqIndex] > 0.5*peak &&
+    energy[timeIndex][freqIndex] > initThreshold) {
     length += 1;
     timeIndex += 1;
+    if (timeIndex > 0 && energy[timeIndex][freqIndex] > peak) {
+      peak = energy[timeIndex][freqIndex];
+    }
   }
   return length;
-}
-
-function getFrequencyIncrement(samplingRatekHz, fftSize) {
-  return (samplingRatekHz / (2 * fftSize)) * 1000;
 }
 
 // Generate the chart
@@ -142,23 +152,22 @@ function chartConversion(buffer, notes, periodSize, chartIncrement, samplingRate
   return chart;
 }
 
-// intending to make each consecutive frequency subband a different key
+// intending to make each consecutive note a different key
 // due to subband not mapping accurately to different notes, likely inaccurate
-function dirtyKeycodeGenerate(noteFreq, freqIncrementForSubband) {
-  let keyNumber = Math.floor((noteFreq/freqIncrementForSubband) % 4);
+function dirtyKeycodeGenerate(freqNoteIndex) {
+  let keyNumber = Math.floor(freqNoteIndex % 4);
   return 37+keyNumber;
 }
 
 // generate the keycode chart
-function keyCodeChartConversion(chart, freqIncrementForSubband) {
+function keyCodeChartConversion(chart) {
   let keyCodeChart = [];
   let currentKeys = {37: 0, 38: 0, 39: 0, 40: 0};
   for (let i=0; i < chart.length; i++) {
     let row = chart[i];
     let keyObjs = [];
     row.forEach((noteLength, i) => {
-      let noteFreq = i*freqIncrementForSubband;
-      let keyCode = dirtyKeycodeGenerate(noteFreq, freqIncrementForSubband);
+      let keyCode = dirtyKeycodeGenerate(i);
       // keep notes from overlapping with previous note's length
       if (currentKeys[keyCode] === 0) {
         // max length is 32 for now
@@ -197,7 +206,7 @@ function writeChartToWorkbook(workbook, chart) {
 // minimum chart increment: 1/16 note (in 60bpm)
 async function fftNotePitchDetection(buffer, samplingRatekHz, debug) {
 
-  let periodSize = 1024;
+  let periodSize = 4096;
   let paddedBufferSize = Math.ceil(buffer.length/periodSize)*periodSize;
 
   buffer = [...buffer, ...(new Array(paddedBufferSize - buffer.length)).fill(0)];
@@ -205,24 +214,26 @@ async function fftNotePitchDetection(buffer, samplingRatekHz, debug) {
   console.log(`padded buffer size = ${buffer.length}`)
 
   let energy = new Array(Math.ceil(buffer.length / periodSize));
-  let subbands = 248; // number of possible distinct pitches
   let periodIndex = 0;
 
-  console.log(
-    `starting fft on ${periodSize} period size with ${subbands} subbands`
-  );
-  debugger;
+  console.log(`fft ${periodSize} period size`);
+
+  let freqIncrement = getFrequencyIncrement(samplingRatekHz, periodSize);
+
+  console.log(`freq increment ${freqIncrement}`);
+
+  let noteRowConverter = new NoteRowConverter(freqIncrement);
 
   while (periodIndex * periodSize < buffer.length) {
     let period = formatValues(buffer, periodIndex, periodSize);
     let fftOutput = runFFT(period);
-    energy[periodIndex] = chunkSum(fftOutput, periodSize / subbands);
+    //energy[periodIndex] = chunkSum(fftOutput, periodSize / subbands);
+    energy[periodIndex] = noteRowConverter.convertRow(fftOutput);
     //if (periodIndex == 30) plotFFT(energy[periodIndex], samplingRatekHz);
     periodIndex += 1;
   }
 
   console.log(`finished ffts`);
-  debugger;
 
   let MASize = 43;
   console.log(`finding SMA of ${MASize}`);
@@ -231,15 +242,13 @@ async function fftNotePitchDetection(buffer, samplingRatekHz, debug) {
 
   console.log(`comparing current energies with SMA`);
 
-  let freqIncrementForSubband = getFrequencyIncrement(samplingRatekHz, periodSize)*periodSize/subbands;
-
-  let notes = energyComparison(energy, energyMA, freqIncrementForSubband);
+  let notes = energyComparison(energy, energyMA);
 
   // using sixteenth note
   let chartIncrement = 1/16;
   let chart = chartConversion(buffer, notes, periodSize, chartIncrement, samplingRatekHz);
 
-  let keyCodeChart = keyCodeChartConversion(chart, freqIncrementForSubband);
+  let keyCodeChart = keyCodeChartConversion(chart);
 
   if (debug) {
     console.log(`writing to workbook`);
