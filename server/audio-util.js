@@ -113,7 +113,7 @@ function getNoteLength(energy, timeIndex, freqIndex, initThreshold) {
   let length = 1;
   let peak = energy[timeIndex][freqIndex];
   // TODO: replace with something that actually makes sense
-  while (timeIndex++ < energy.length &&
+  while (++timeIndex < energy.length &&
     energy[timeIndex][freqIndex] > 0.5*peak &&
     energy[timeIndex][freqIndex] > initThreshold) {
     length += 1;
