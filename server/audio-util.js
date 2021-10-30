@@ -110,7 +110,6 @@ function energyComparison(energy, energyMA) {
 }
 
 function getNoteLength(energy, timeIndex, freqIndex, initThreshold) {
-  console.log('getNoteLength');
   let length = 1;
   let peak = energy[timeIndex][freqIndex];
   // TODO: replace with something that actually makes sense
@@ -118,8 +117,9 @@ function getNoteLength(energy, timeIndex, freqIndex, initThreshold) {
     energy[timeIndex][freqIndex] > 0.5*peak &&
     energy[timeIndex][freqIndex] > initThreshold) {
     length += 1;
-    
+
     if(!energy[timeIndex]) {
+      console.log('getNoteLength');
       console.log(energy);
       console.log(timeIndex);
       console.log(freqIndex);
