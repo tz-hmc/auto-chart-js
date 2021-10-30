@@ -118,11 +118,13 @@ function getNoteLength(energy, timeIndex, freqIndex, initThreshold) {
     energy[timeIndex][freqIndex] > 0.5*peak &&
     energy[timeIndex][freqIndex] > initThreshold) {
     length += 1;
-
-    console.log(energy);
-    console.log(timeIndex);
-    console.log(freqIndex);
-    console.log(energy[timeIndex]);
+    
+    if(!energy[timeIndex]) {
+      console.log(energy);
+      console.log(timeIndex);
+      console.log(freqIndex);
+      console.log(energy[timeIndex]);
+    }
 
     if (timeIndex > 0 && energy[timeIndex][freqIndex] > peak) {
       peak = energy[timeIndex][freqIndex];
