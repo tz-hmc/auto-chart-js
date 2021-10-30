@@ -97,7 +97,7 @@ function energyComparison(energy, energyMA) {
     energy[i].forEach((energyAtFreq, j) => {
       let threshold = C * energyMA[i][j];
       if (energyAtFreq > threshold) {
-        let noteLength = getNoteLength(energy, energyMA, C, i, j, threshold);
+        let noteLength = getNoteLength(energy, i, j, threshold);
         currNote.push(noteLength);
       }
       else {
@@ -109,15 +109,21 @@ function energyComparison(energy, energyMA) {
   return notes;
 }
 
-function getNoteLength(energy, energyMA, C, timeIndex, freqIndex, initThreshold) {
+function getNoteLength(energy, timeIndex, freqIndex, initThreshold) {
+  console.log('getNoteLength');
   let length = 1;
   let peak = energy[timeIndex][freqIndex];
   // TODO: replace with something that actually makes sense
-  while (timeIndex < energy.length &&
+  while (timeIndex++ < energy.length &&
     energy[timeIndex][freqIndex] > 0.5*peak &&
     energy[timeIndex][freqIndex] > initThreshold) {
     length += 1;
-    timeIndex += 1;
+
+    console.log(energy);
+    console.log(timeIndex);
+    console.log(freqIndex);
+    console.log(energy[timeIndex]);
+
     if (timeIndex > 0 && energy[timeIndex][freqIndex] > peak) {
       peak = energy[timeIndex][freqIndex];
     }
