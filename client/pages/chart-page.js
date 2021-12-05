@@ -34,9 +34,9 @@ class ChartPage extends HTMLElement {
                 justify-content: space-around;
             }
             app-chart {
-                width: calc(45%);
-                height: calc(95%);
-                border: 1px solid #e3e3e3;
+                width: calc(32%);
+                height: calc(90%);
+                border: 1px solid grey;
             }
             app-chart.local {
                 border: 2px solid white;

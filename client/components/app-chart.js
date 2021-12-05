@@ -3,11 +3,8 @@
  * and length is the number of notes it extends to.
  * Each index in this length corresponds to 1/16 note.
  **/
-const FILL_COLOR_LIGHT ='#fefefe';
-const FILL_COLOR_DARK = '#f1f1f1';
-
-const PIXELS_PER_NOTE = 45;
-const DEFAULT_RADIUS = 25;
+// this is in keys.js (need webpack & imports..)
+//const PIXELS_PER_NOTE = 45;
 const KEYS_Y_POS = 75;
 
 const pixelToNoteTimeMs = pixels => sixteenthNotePosToTimeMs(pixels/PIXELS_PER_NOTE)
@@ -121,48 +118,22 @@ class AppChart extends HTMLElement {
         let centerY = KEYS_Y_POS;
         this.keys.forEach((note, i) => {
             let lightUp = this.input.CurrentKeyDown(note.keyCode);
-            this.drawKeyCircle(i, centerY, lightUp);
+            this.drawKey(i, centerY, lightUp);
         });
     }
-    drawNoteCircle(keyIndex, centerY) {
-        let circle = new Path2D();
+    drawNote(keyIndex, centerY) {
         let centerX = this.columnSize*(keyIndex+0.5);
-        circle.arc(centerX, centerY, DEFAULT_RADIUS, 0, 2*Math.PI, false);
-        this.context.fillStyle = this.keys[keyIndex].color;
-        this.context.fill(circle);
+        this.keys[keyIndex].drawNote(this.context, centerX, centerY);
     }
-    drawKeyCircle(keyIndex, centerY, fillLight=false) {
-        let circle = new Path2D();
+    drawKey(keyIndex, centerY, fillLight=false) {
         let centerX = this.columnSize*(keyIndex+0.5);
-        circle.arc(centerX, centerY, DEFAULT_RADIUS, 0, 2*Math.PI, false);
-        if (fillLight) {
-            this.context.fillStyle = FILL_COLOR_LIGHT;
-            this.context.fill(circle);
-        } else {
-            this.context.fillStyle = FILL_COLOR_DARK;
-            this.context.fill(circle);
-        }
-        this.context.strokeStyle = this.keys[keyIndex].color;
-        this.context.lineWidth = 1;
-        this.context.stroke(circle);
+        this.keys[keyIndex].drawKey(this.context, centerX, centerY, fillLight);
     }
-    drawRoundRect(keyIndex, centerY, noteLength) {
-        let roundRect = new Path2D();
+    drawLongNote(keyIndex, centerY, noteLength) {
         let centerX = this.columnSize*(keyIndex+0.5);
-        let height = PIXELS_PER_NOTE*noteLength-(2*DEFAULT_RADIUS);
-        let left = centerX-DEFAULT_RADIUS,
-            right = centerX+DEFAULT_RADIUS,
-            top = centerY-DEFAULT_RADIUS,
-            bottom = centerY+DEFAULT_RADIUS+height;
-        roundRect.moveTo(right, bottom);
-        roundRect.arcTo(left, bottom, left, top, DEFAULT_RADIUS);
-        roundRect.arcTo(left, top, right, top, DEFAULT_RADIUS);
-        roundRect.arcTo(right, top, right, bottom, DEFAULT_RADIUS);
-        roundRect.arcTo(right, bottom, left, bottom, DEFAULT_RADIUS);
-        this.context.fillStyle = this.keys[keyIndex].color;
-        this.context.fill(roundRect);
+        this.keys[keyIndex].drawLongNote(this.context, centerX, centerY, noteLength);
     }
-    drawNote(note, noteIndex, currTimeMs) {
+    drawNoteAt(note, noteIndex, currTimeMs) {
         // currTime is the very top of canvas
         let canvasTopTime = currTimeMs;
         let canvasBottomTime = currTimeMs+pixelToNoteTimeMs(this.canvas.height);
@@ -173,10 +144,10 @@ class AppChart extends HTMLElement {
         if(!(beginNoteTime > canvasBottomTime || endNoteTime < canvasTopTime)) {
             let keyIndex = this.keys.findIndex(key => key.keyCode === note.keyCode);
             if (note.length == 1) {
-                this.drawNoteCircle(keyIndex, noteYPosition);
+                this.drawNote(keyIndex, noteYPosition);
             }
             else {
-                this.drawRoundRect(keyIndex, noteYPosition, note.length)
+                this.drawLongNote(keyIndex, noteYPosition, note.length);
             }
         }
         // if note is not visible, do not draw
@@ -185,7 +156,7 @@ class AppChart extends HTMLElement {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.drawKeys();
         this.notes.forEach((notesAtTime, noteIndex) =>
-            notesAtTime.forEach(note => this.drawNote(note, noteIndex, currTime))
+            notesAtTime.forEach(note => this.drawNoteAt(note, noteIndex, currTime))
         );
     }
     drawScore() {

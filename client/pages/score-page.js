@@ -35,6 +35,9 @@ class ScorePage extends HTMLElement {
             .flex-container > * {
                 margin: 50px;
             }
+            .flex-child {
+                width: 100px;
+            }
             .winner {
                 animation: blink 1s ease-in infinite;
             }
@@ -43,11 +46,11 @@ class ScorePage extends HTMLElement {
                     border: 6px dashed yellow;
                 }
                 100% {
-                    border: 1px dotted white;
+                    border: 1px solid white;
                 }
             }
             .loser {
-                border: 1px dashed white;
+                border: 1px solid grey;
             }
             .score {
                 border-radius: 40%;
@@ -55,8 +58,12 @@ class ScorePage extends HTMLElement {
             }
         </style>
         <div class='flex-container'>
-            <div class='${(this.localScore > this.enemyScore) ? 'winner' : 'loser'} score'>${this.localScore}</div>
-            <div class='${(this.enemyScore > this.localScore) ? 'winner' : 'loser'} score'>${this.enemyScore}</div>
+            <div class='flex-child'>
+                <div class='${(this.localScore > this.enemyScore) ? 'winner' : 'loser'} score'>${this.localScore}</div>
+            </div>
+            <div class='flex-child'>
+                <div class='${(this.enemyScore > this.localScore) ? 'winner' : 'loser'} score'>${this.enemyScore}</div>
+            </div>
         </div>`;
     }
 }

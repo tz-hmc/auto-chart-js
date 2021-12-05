@@ -1,0 +1,32 @@
+<html>
+<head>
+    <title>Auto Chart</title>
+    <style>
+        body {
+            background: rgb(16, 16, 16);
+            color: rgb(250, 250, 250);
+            font-family: monospace;
+            font-size: 2em;
+            text-align: center;
+            overflow: hidden;
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+    <canvas width="800px" height="800px"></canvas>
+    <script src="./components/key.js"></script>
+    <script>
+        this.context = document.body.querySelector('canvas').getContext('2d');
+        defaultKeys[0].drawNote(this.context, 100, 200);
+        defaultKeys[1].drawNote(this.context, 200, 200);
+        defaultKeys[2].drawNote(this.context, 300, 200);
+        defaultKeys[3].drawNote(this.context, 400, 200);
+
+        defaultKeys[0].drawKey(this.context, 100, 400, true);
+        defaultKeys[1].drawKey(this.context, 200, 400, true);
+        defaultKeys[2].drawKey(this.context, 300, 400, true);
+        defaultKeys[3].drawKey(this.context, 400, 400, true);
+    </script>
+</body>
+</html>

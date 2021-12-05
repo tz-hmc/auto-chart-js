@@ -3,6 +3,7 @@ import fs from 'fs';
 
 const files = [
     './client/utils/utils.js',
+    './client/components/key.js',
     './client/components/loading-spinner.js',
     './client/components/input.js',
     './client/components/local-input.js',
